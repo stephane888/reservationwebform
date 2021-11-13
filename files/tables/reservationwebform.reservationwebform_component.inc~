@@ -1,0 +1,93 @@
+<?php 
+
+$schema['reservationwebform_component'] = array(
+        'description' => 'The table for storing the subscriber data.',
+        'fields' => array(
+            'rwid' => array(
+                'description' => 'The primary identifier for subscriber.',
+                'type' => 'serial',
+                'not null' => TRUE,
+                'unsigned' => TRUE,
+            ),
+            'nid' => array(
+                'description' => 'nid.',
+                'type' => 'int',
+                'length' => 10,
+                'not null' => TRUE,
+                'default'  => '0',
+            ),
+            'cid' => array(
+                'description' => 'nid.',
+                'type' => 'int',
+                'length' => 10,
+                //'not null' => TRUE,
+                //'default'  => NULL,
+            ),
+           'actif' => array(
+                'description' => 'nid.',
+                'type' => 'int',
+                'length' => 10,
+                'not null' => TRUE,
+                'default'  => NULL,
+            ),
+            'calcul_price' => array(
+                'description' => 'nid.',
+                'type' => 'int',
+                'length' => 10,
+                'not null' => TRUE,
+                'default'  => NULL,
+            ),
+            'display_price' => array(
+                'description' => 'nid.',
+                'type' => 'int',
+                'length' => 10,
+                'not null' => TRUE,
+                'default'  => NULL,
+            ),
+            'price' => array(
+                'description' => 'Subscriber email.',
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default' => NULL,
+            ),
+            'texte_singulier' => array(
+                'description' => 'Subscriber email.',
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default' => NULL,
+            ),
+            'texte_plurier' => array(
+                'description' => 'Subscriber email.',
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default' => NULL,
+            ),
+            'data_image_externe' => array(
+                'description' => 'Subscriber email.',
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default'  => NULL,
+            ),
+            'data_video_externe' => array(
+                'description' => 'Subscriber email.',
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default'  => NULL,
+            ),
+            'data_order' => array(
+                'description' => 'Subscriber email.',
+                'type' => 'int',
+                'length' => 10,
+                'not null' => TRUE,
+                'default'  => NULL,
+            ),
+        ),
+        'primary key' => array('rwid'),
+    );
+
+    

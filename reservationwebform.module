@@ -1,0 +1,1397 @@
+<?php
+
+// Load css captcha file to use some helper functions
+require_once (drupal_get_path('module', 'css_captcha') . '/../text_captcha/text_captcha.inc');
+
+// /////////////////////
+function reservationwebform_menu() {
+  $items = array();
+  // menu
+  $items['admin/config/user-interface/reservationwebform'] = array(
+    'title' => 'Configuration de reservationwebform ',
+    'access arguments' => array(
+      'administer users'
+    ),
+    'page callback' => array(
+      'reservationwebform_configur'
+    )
+  );
+
+  // menu.
+  $items['admin/structure/reservationwebform'] = array(
+    'title' => ' Reservation ',
+    'access arguments' => array(
+      'administer users'
+    ),
+    'page callback' => array(
+      'reservationwebform_conf'
+    )
+  );
+
+  // / tabs for admin menu
+  $items['admin/structure/reservationwebform/tab1'] = array(
+    'title' => ' Configuration générale ',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => - 10
+  );
+
+  $items['admin/structure/reservationwebform/tab2'] = array(
+    'title' => 'configuration des prix',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => array(
+      'reservationwebform_confprice'
+    ),
+    'access arguments' => array(
+      'administer users'
+    )
+  );
+  $items['admin/structure/reservationwebform/tab3'] = array(
+    'title' => 'Libelles ',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => array(
+      'reservationwebform_libelle'
+    ),
+    'access arguments' => array(
+      'administer users'
+    )
+  );
+
+  // menu.
+  $items['reservation/content/%/%/%/%/%'] = array(
+    'title' => 'Configuration de reservation ',
+    'page arguments' => array(
+      2,
+      3,
+      4,
+      5,
+      6
+    ),
+    // 'type' => MENU_CALLBACK,
+    'access arguments' => array(
+      'access content'
+    ),
+    'page callback' => array(
+      'reservationwebform_content'
+    )
+  );
+
+  // example menu
+  /*
+   * $items['admin/config/system/social_links'] = array(
+   * 'title' => 'social_links',
+   * 'description' => 'Configure to fit clients needs',
+   * 'page callback' => 'drupal_get_form',
+   * 'page arguments' => array('social_links_settings'),
+   * 'access arguments' => array('administer site configuration'),
+   * 'file' => 'social_links.admin.inc',
+   * );
+   */
+  return $items;
+}
+
+/**
+ * Implements hook_captcha().
+ * Not work
+ */
+/*
+ * function reservationwebform_captcha($op, $captcha_type = '') {
+ * dpm($op);
+ * switch ($op) {
+ * case 'list':
+ * return array('Math');
+ * case 'generate':
+ * if ($captcha_type == "CSS CAPTCHA") {
+ * // Build CAPTCHA
+ * $captcha = array();
+ * $solution=123;
+ * $captcha['solution'] = $solution;
+ * $captcha['form']['captcha_response'] = array(
+ * '#type' => 'textfield',
+ * '#title' => t('Enter the code above'),
+ * '#size' => 10,
+ * '#prefix' => '<div class="css-captcha-code">' . $solution . '</div>',
+ * '#maxlength' => 10,
+ * '#required' => TRUE,
+ * '#description' => t('Enter the code without spaces.')
+ * );
+ * return $captcha;
+ * }
+ * break;
+ * }
+ * }
+ */
+function reservationwebform_configur() {
+  $output = 'no config';
+  return $output;
+}
+
+function reservationwebform_conf() {
+  $form = drupal_get_form('reservationwebform_conf_form');
+  $output = drupal_render($form);
+  return $output;
+}
+
+function reservationwebform_confprice() {
+  $output = '<p>Ajouter un nouveau tarif <strong>Chambre</strong> <a href="/node/45">cliquez ici</a> </p>';
+  $output .= '<p> <a href="/node/45/webform-results">Voir tous les tarifs existants <strong>Chambre</strong></a></p>';
+  $output .= '<p>Ajouter un nouveau tarif <strong>Gite</strong> <a href="/node/52">cliquez ici</a> </p>';
+  $output .= '<p> <a href="/node/52/webform-results">Voir tous les tarifs existants <strong>Gite</strong></a></p>';
+  $output .= '<p></p>';
+  $output .= '<p>Pour la modification du mode calcul voir le fichier /sites/all/modules/module-wbuniverse/reservationwebform/files/reservation.js?v=1"</p>';
+  return $output;
+}
+
+function reservationwebform_form_alter(&$form, &$form_state, $form_id) {
+  if ('webform_client_form_44' == $form_id) {
+    $web_id = 44;
+    global $language;
+    global $user;
+
+    $config = [
+      'language' => $language->prefix,
+      'closeText' => t('To close'),
+      'prevText' => t('Previous'),
+      'nextText' => t('following'),
+      'currentText' => t('Today'),
+      'monthNames' => [
+        t('January'),
+        t('February'),
+        t('March'),
+        t('April'),
+        t('May'),
+        t('June'),
+        t('July'),
+        t('August'),
+        t('September'),
+        t('October'),
+        t('November'),
+        t('December')
+      ],
+      'monthNamesShort' => [
+        t('Janu'),
+        t('Febr'),
+        t('Marc'),
+        t('April'),
+        t('May'),
+        t('June'),
+        t('July'),
+        t('Augu'),
+        t('Sept'),
+        t('Octo'),
+        t('Nove'),
+        t('Dece')
+      ],
+      'dayNames' => [
+        t('Sunday'),
+        t('Monday'),
+        t('Tuesday'),
+        t('Wednesday'),
+        t('Thursday'),
+        t('Friday'),
+        t('Saturday')
+      ],
+      'dayNamesShort' => [
+        t('Sun'),
+        t('Mon'),
+        t('Tue'),
+        t('Wed'),
+        t('Thu'),
+        t('Fri'),
+        t('Sat')
+      ],
+      'already-booked' => t('Already booked'),
+      'arrival-date' => t('Arrival date'),
+      'date-departure' => t('Date of departure'),
+      'reserve-now' => t('Reserve now'),
+      'you-can-anymore' => t('You can not book anymore'),
+      'options' => t('Options'),
+      'nuits' => t('nights'),
+      'nuit' => t('night'),
+      'from' => t('from'),
+      'au' => t('to'),
+      'the' => t('the'),
+      'price' => t('Price'),
+      'total' => t('Total'),
+      'free-nights' => t('free nights'),
+      'reset' => t('Reset'),
+      'extra_cost' => t('Extra cost')
+    ];
+    foreach (_wbu_libelle() as $key => $value) {
+      $string = t('reservation_' . variable_get('wbu_' . $key));
+      $config[$key] = str_replace("reservation_", "", $string);
+    }
+    // dpm($form);
+    require_once 'class/translateWebform.php';
+    $tranalte = new translateWebform();
+    $form = $tranalte->translateLabel($form);
+    $form['#attributes']['autocomplete'] = 'off';
+    $form['submitted']["information_personnelle"]["#title"] = '<h3 class="title-style1">' . $form['submitted']["information_personnelle"]["#title"] . '<div class="title-block"></div> </h3>';
+    $form['submitted']['periode']['date_darriver']['#attributes']['id'] = 'edit-submitted-periode-date-darriver';
+    $form['submitted']['periode']['date_depart']['#attributes']['id'] = 'edit-submitted-periode-date-depart';
+    $form['submitted']['recapitulatif2']['#attributes']['id'] = 'edit-submitted-recapitulatif2-value';
+    $form['submitted']['enfant_moins_de_3_ans_10_euros']['#attributes']['id'] = 'edit-submitted-enfant-moins-de-3-ans-10-euros';
+    $form['submitted']['enfant_plus_de_3_ans_20euro']['#attributes']['id'] = 'edit-submitted-enfant-plus-de-3-ans-20euro';
+    // /////////////submitted[enfant_plus_de_3_ans_20ans]
+
+    $form['submitted']['enfant_plus_de_3_ans_20euro']['#suffix'] = ''; /*
+                                                                        * <div class="periode widget"> <h4> Période </h4> <label style="max-width:100px; display:inline-block;"> Date arriver : </label> <input type="text" id="datearriver" size="30" style="max-width:150px;"> </label>
+                                                                        * <label style="max-width:100px; display:inline-block;"> Date départ : </label> <input type="text" id="datedepart" size="30" style="max-width:150px;"> </div>
+                                                                        * ';
+                                                                        */
+
+    $form['submitted']['recapitulatif2']['#prefix'] = '<div id="options"></div>';
+    $form['submitted']['recapitulatif2']['#suffix'] = '
+					<div id="recapitulatif" class="widget"> <h3 class="title-style1">' . $config['Summary'] . '<div class="title-block"></div></h3>
+						<p class="type_piece"></p>
+						<p class="periode"></p>
+						<p class="personnelinfo"></p>
+						<p class="option"></p>
+						<p class="totalprice"></p>
+						<div class="vide">' . $config['no-choise'] . '</div>
+					</div>
+				';
+    // /// ajax
+    /*
+     * $form['actions']['submit']['#ajax'] = array(
+     * 'callback' => 'reservationwebform_webform_ajax_submit',
+     * 'wrapper' => 'webform-client-form-44',
+     * 'method' => 'replace',
+     * 'effect' => 'fade',
+     * );
+     */
+    $form['actions']['submit']['#ajax'] = 0;
+    $form['#attached']['css'][] = drupal_get_path('module', 'reservationwebform') . '/files/style.css';
+    $form['#attached']['js'][] = drupal_get_path('module', 'reservationwebform') . '/files/reservation.js';
+    $form['#attached']['js'][] = [
+      'type' => 'setting',
+      'data' => [
+        'reservationwebform' => $config,
+        'langcode' => $language->language
+      ]
+    ];
+    $form['#validate'][] = 'reservationwebform_form_validate';
+
+    $form['#prefix'] = '
+			<div class="views-field views-field-nothing">
+				<span class="field-content"><h3 class="title-style1">
+						' . $config['Makereservation'] . '
+						<div class="title-block"></div>
+					</h3></span>
+			</div>
+		';
+    /*
+     * $url = "https://www.airbnb.fr/calendar/ical/18494088.ics?s=8867db84e3001cc6208faab34f61bb60";
+     * //$url = "https://stackoverflow.com/questions/4545790/file-get-contents-returns-403-forbidden";
+     * $ch = curl_init();
+     * curl_setopt($ch, CURLOPT_URL, $url);
+     * curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+     * curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+     * $calendrier = curl_exec($ch);
+     * curl_close($ch);
+     * $path_of_module = drupal_get_path('module', 'reservationwebform');
+     * if(!file_exists($path_of_module.'/files/doc')) {mkdir($path_of_module.'/files/doc'); }
+     * $filename = $path_of_module.'/files/doc/output_ical.inc';
+     * ob_start();
+     * var_dump( $calendrier );
+     * $result = ob_get_clean();
+     * //if (!file_exists($filename) )
+     * {
+     * $monfichier = fopen($filename, 'w+');
+     * fputs($monfichier, $result);
+     * fclose($monfichier);
+     * }
+     *
+     *
+     */
+    /**
+     * Tranalate field node.
+     *
+     * @var Ambiguous $node
+     */
+    $node = $form['#node'];
+    $string = t('reservation_mail_' . $node->field_breve_description['und'][0]['value']);
+    $node->field_breve_description['und'][0]['value'] = str_replace('reservation_mail_', "", $string);
+    $node->field_breve_description['und'][0]['safe_value'] = str_replace('reservation_mail_', "", $string);
+
+    /**
+     * translate email setting
+     */
+    $tranalte->prefix = 'reservation_mail_';
+    $form = $tranalte->translateWebformSettings($form);
+    /*
+     * $string = t('reservation_mail_' . $node->webform['confirmation']);
+     * $node->webform['confirmation'] = str_replace('reservation_mail_', "", $string);
+     *
+     * foreach ($node->webform['emails'] as $key_email=>$email) {
+     * if($email['status']){
+     * $string = t('reservation_mail_' . $email['subject']);
+     * $node->webform['emails'][$key_email]['subject'] = str_replace('reservation_mail_', "", $string);
+     * }
+     * }
+     */
+
+    $form['#node'] = $node;
+    // dpm($form);
+  } elseif ('webform_client_form_39' == $form_id) {
+    require_once 'class/translateWebform.php';
+    $tranalte = new translateWebform();
+    $tranalte->prefix = 'contact__';
+    $form = $tranalte->translateLabel($form);
+    $form = $tranalte->translateWebformSettings($form);
+  }
+  return $form;
+}
+
+function reservationwebform_webform_submission_presave($node, &$submission) {
+  // Update some component's value before it is saved.
+  // $component_id = 4;
+  // $submission->data[$component_id][0] = 'foo';
+  if ($submission->nid == 44) {
+    $component_id = 11;
+    // $submission->data[$component_id][0]=htmlentities($submission->data[$component_id][0]);
+  }
+  /*
+   * $path_of_module = drupal_get_path('module', 'reservationwebform');
+   * if(!file_exists($path_of_module.'/files/doc')) {mkdir($path_of_module.'/files/doc'); }
+   * $filename = $path_of_module.'/files/doc/output_submit.inc';
+   * ob_start();
+   * var_dump( $submission );
+   * $result = ob_get_clean();
+   * //if (!file_exists($filename) )
+   * {
+   * $monfichier = fopen($filename, 'w+');
+   * fputs($monfichier, $result);
+   * fclose($monfichier);
+   * }
+   * /*
+   */
+}
+
+function reservationwebform_form_validate(&$form, &$form_state) {
+  // /form_set_error('date_darriver', "champs vide ou rassurez vous que vous avez sectionné un interlocuteur : date_darriver "); ///work
+  // form_set_error('recapitulatif', "champs vide ou rassurez vous que vous avez sectionné un interlocuteur : recapitulatif ");
+  return $form;
+}
+
+function reservationwebform_webform_ajax_submit(&$form, &$form_state) {
+  // par defaut le formulaire est sauvegardé.
+  // form_set_error('date_darriver', "champs vide ou rassurez vous que vous avez sectionné un interlocuteur : ");//no work
+  $sid = $form_state['values']['details']['sid'];
+  if ($sid) {
+    $node = node_load($form_state['values']['details']['nid']);
+    $confirmation = array(
+      '#type' => 'markup',
+      '#markup' => check_markup($node->webform['confirmation'], $node->webform['confirmation_format'], '', TRUE) . '
+          <style> div.customstyle{display: none !important;z-index: -1;position:absolute; width:0px;overflow:hidden; left:0px; top:848px; margin-top:257.40000000000003px; margin-left:235.2px;} </style>'
+    );
+    return $confirmation;
+  } else {
+    // $form['#attached']['js'][] = drupal_get_path('module', 'reservationwebform') . '/files/reservation.js'; ///work
+    $form['submitted']['tilejs'] = array(
+      '#type' => 'markup',
+      '#markup' => '<script src="/' . drupal_get_path('module', 'reservationwebform') . '/files/reservation.js"></script>'
+    ); // / work
+    return $form;
+  }
+}
+
+function reservationwebform_content($user_uid_url, $action_url, $arg_4, $arg_5, $uid_comment_url) {
+  $json['data'] = 'error';
+  // /////// recuperation des jours occupé ou non reservable /////////////////
+  // // à partir des sauvegarde local
+  if ($action_url == 'arraydaysnotvalid') {
+    $json['data_chambre'] = reservationwebform_liste_days_not_valide(44, 'chambre');
+    $json['data_gite'] = reservationwebform_liste_days_not_valide(44, 'gite');
+  }
+  if ($action_url == 'generalinfo') {
+    $json = reservationwebform_load_generalinfo();
+  }
+  if ($action_url == 'loaddateprice') {
+    $json['data_chambre'] = reservationwebform_load_dateprice($arg_4, $arg_5, 45);
+    $json['data_gite'] = reservationwebform_load_dateprice($arg_4, $arg_5, 52);
+  }
+  // // à partir des sauvegarde externe
+
+  drupal_json_output($json);
+}
+
+function reservationwebform_load_generalinfo() {
+  global $language;
+  $current_lang = $language->language;
+  $options = [];
+  $options['langcode'] = $current_lang;
+  $data = [];
+  $result = [];
+  $nid = 44;
+  $pieces = [
+    'chambre',
+    'gite'
+  ];
+  foreach ($pieces as $piece) {
+    $filed_exit = db_select('reservationwebform_component', 'n')->fields('n')->condition('nid', $nid)->condition('piece', $piece)->execute();
+    while ($field = $filed_exit->fetchAssoc()) {
+      $data[$field['cid']] = $field;
+      if (! empty($data[$field['cid']]['texte_singulier'])) {
+        $data[$field['cid']]['texte_singulier_original'] = $data[$field['cid']]['texte_singulier'];
+        $data[$field['cid']]['texte_singulier'] = t($data[$field['cid']]['texte_singulier'], [], $options);
+        $data[$field['cid']]['texte_singulier_lang'] = $options;
+      }
+      if (! empty($data[$field['cid']]['texte_plurier'])) {
+        $data[$field['cid']]['texte_plurier_original'] = $data[$field['cid']]['texte_plurier'];
+        $data[$field['cid']]['texte_plurier'] = t($data[$field['cid']]['texte_plurier'], [], $options);
+      }
+    }
+    $result['data_' . $piece] = $data;
+  }
+  // debugLog::logs($data, 'reservationwebform_component');
+  return $result;
+}
+
+/**
+ * Recupere en bd les données de l'année encours et +/- année
+ * Renvoit les dates de l'année en cours et +/- année, donc on aurra au plus 365*3 jour.
+ *
+ * @param int $annee
+ * @param int $mois
+ * @return array
+ */
+function reservationwebform_load_dateprice($annee, $mois, $nid) {
+  $tempon = 0;
+  $periode = $dates = [];
+  $i = 0;
+  $annee_m = $annee - 1;
+  $annee_p = $annee + 1;
+  $filed_exit = db_query("
+Select tn.`id_data` as id_data, tn.`sid`, tn.`cid`, tn.`data`, tn.`completed`, tn.`date_submitted` FROM
+( SELECT r.`nid` as id_data, r.`sid`, r.`data`, r.`cid`, ws.`completed`, DATE_FORMAT(FROM_UNIXTIME(`completed`), '%Y') as `date_submitted`  FROM `webform_submitted_data` as r
+INNER JOIN `webform_submissions` AS ws ON ws.sid = r.sid
+where r.nid ='$nid' ) as tn WHERE `date_submitted` >= $annee_m and `date_submitted` <=$annee_p
+");
+  /*
+   * $filed_exit = db_select('webform_submitted_data', 'n')
+   * -> leftjoin('webform_submissions', 'r', 'n.cid = r.cid AND n.nid = r.nid ')
+   * -> fields('n', array('nid','sid','cid','data'))
+   * -> condition('nid', $nid )
+   * -> condition('data', '%' . db_like($annee) . '%', 'LIKE')
+   * //-> orderBy('sid', 'DESC')//ORDER BY created
+   * //-> orderBy('data', 'DESC')
+   * //->range(0,2)
+   * //-> condition('cid', $cid )
+   * -> execute();
+   * /*
+   */
+  while ($field = $filed_exit->fetchAssoc()) {
+    if ($field['sid'] == $tempon) {
+      // /date de debut
+      if ($field['cid'] == 2) {
+        $periode[$i]['debut'] = $field['data'];
+      } // / dtae de fin
+      elseif ($field['cid'] == 3) {
+        $periode[$i]['fin'] = $field['data'];
+      } // /// montant
+      elseif ($field['cid'] == 4) {
+        $periode[$i]['montant'] = $field['data'];
+      }
+    } else {
+      $tempon = $field['sid'];
+      $i ++;
+      // /date de debut
+      if ($field['cid'] == 2) {
+        $periode[$i]['debut'] = $field['data'];
+      } // / dtae de fin
+      elseif ($field['cid'] == 3) {
+        $periode[$i]['fin'] = $field['data'];
+      } // /// montant
+      elseif ($field['cid'] == 4) {
+        $periode[$i]['montant'] = $field['data'];
+      }
+    }
+  }
+  // debugLog::logs([$annee, $mois, $periode], 'reservationwebform_load_dateprice');
+  $k = 1;
+  $j = 0;
+  for ($k = 1; $k <= $i; $k ++) {
+    foreach (getDatesFromRange($periode[$k]['debut'], $periode[$k]['fin'], $format = 'd-m-Y') as $date) {
+      $dates[$date]['day'] = $date;
+      $dates[$date]['montant'] = $periode[$k]['montant'];
+      $j ++;
+    }
+  }
+  /* */
+  return $dates;
+}
+
+function reservationwebform_liste_days_not_valide($nid, $piece) {
+  $cid = 1;
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $filters = array(
+    'nid' => 44
+  );
+  $dates = array();
+  // /load on local database.
+  $i = 0;
+  $j = 0;
+  $p = 0;
+  /*
+   * $submissions = webform_get_submissions($filters);
+   * foreach($submissions as $submission){
+   * $periodes['p_'.$i]['arrive']=$submission->data[13][0];
+   * $periodes['p_'.$i]['depart']=$submission->data[12][0];
+   * foreach(getDatesFromRange($periodes['p_'.$i]['arrive'], $periodes['p_'.$i]['depart'], $format = 'd-m-Y') as $date){$dates[$j]=$date; $j++;}
+   * $i++;
+   * }
+   */
+
+  if ($piece == 'chambre') {
+    // // load on external source.
+    $url_value = db_select('reservationwebform_component', 'n')->fields('n', array(
+      'nid',
+      'cid',
+      'data_url_syn'
+    ))
+      ->condition('nid', $nid)
+      ->condition('cid', $cid)
+      ->condition('piece', 'chambre')
+      ->execute()
+      ->fetchAssoc();
+
+    if (! empty($url_value['data_url_syn'])) {
+      $periodes = getDateFormISC_ical($url_value['data_url_syn']);
+      // debugLog::logs($periodes, 'getDateFormISC_ical');
+      foreach ($periodes as $periode) {
+        if ($periode['allDay']) {
+          $a_date = explode('-', $periode['arrive']);
+          // $d_date = explode('-', $periode['depart']);
+          $j = $a_date[2] . '-' . $a_date[1] . '-' . $a_date[0];
+
+          $dates[$j]['depart'] = FALSE;
+          foreach (getDatesFromRange($periode['arrive'], $periode['depart'], 'd-m-Y') as $date) {
+            $j = $date;
+            // $dates[$j]['day']=$date; $dates[$j]['arrive']=TRUE;
+            // $dates[$j]['depart']=TRUE;
+            $dates[$j]['day'] = $date;
+            $dates[$j]['arrive'] = TRUE;
+            if (isset($dates[$j]['depart'])) {} else {
+              $dates[$j]['depart'] = TRUE;
+            }
+          }
+          ;
+          $dates[$j]['arrive'] = FALSE;
+          // $dates[$j - 1]['arrive']=FALSE;
+        }
+        $p ++;
+      }
+    }
+  } elseif ($piece == 'gite') {
+    // // load on external source.
+    $url_value = db_select('reservationwebform_component', 'n')->fields('n', array(
+      'nid',
+      'cid',
+      'data_url_syn'
+    ))
+      ->condition('nid', $nid)
+      ->condition('cid', $cid)
+      ->condition('piece', 'gite')
+      ->execute()
+      ->fetchAssoc();
+
+    if (! empty($url_value['data_url_syn'])) {
+      $periodes = getDateFormISC_ical($url_value['data_url_syn']);
+      // debugLog::logs($periodes, 'getDateFormISC_ical');
+      foreach ($periodes as $periode) {
+        if ($periode['allDay']) {
+          $a_date = explode('-', $periode['arrive']);
+          // $d_date = explode('-', $periode['depart']);
+          $j = $a_date[2] . '-' . $a_date[1] . '-' . $a_date[0];
+
+          $dates[$j]['depart'] = FALSE;
+          foreach (getDatesFromRange($periode['arrive'], $periode['depart'], 'd-m-Y') as $date) {
+            $j = $date;
+            // $dates[$j]['day']=$date; $dates[$j]['arrive']=TRUE;
+            // $dates[$j]['depart']=TRUE;
+            $dates[$j]['day'] = $date;
+            $dates[$j]['arrive'] = TRUE;
+            if (isset($dates[$j]['depart'])) {} else {
+              $dates[$j]['depart'] = TRUE;
+            }
+          }
+          ;
+          $dates[$j]['arrive'] = FALSE;
+          // $dates[$j - 1]['arrive']=FALSE;
+        }
+        $p ++;
+      }
+    }
+  }
+  /* */
+  return $dates;
+}
+
+function getDatesFromRange($start, $end, $format = 'Y-m-d') {
+  $array = array();
+  $interval = new DateInterval('P1D');
+
+  $realEnd = new DateTime($end);
+  $realEnd->add($interval);
+
+  $period = new DatePeriod(new DateTime($start), $interval, $realEnd);
+
+  foreach ($period as $date) {
+    $array[] = $date->format($format);
+  }
+
+  return $array;
+}
+
+function getDateFormISC_ical($url) {
+  require_once drupal_get_path('module', 'reservationwebform') . '/calandar/SG_iCal.php';
+  $ical = new SG_iCalReader($url);
+  $query = new SG_iCal_Query();
+  $evts = $ical->getEvents();
+  // $evts = $query->Between($ical,strtotime('20100901'),strtotime('20101131'));
+  $periodes = [];
+  $it = 0;
+  if ($evts) {
+    foreach ($evts as $id => $ev) {
+      $periodes[] = array(
+        "id" => ($id + 1),
+        "title" => $ev->getProperty('summary'),
+        "arrive" => date('Y-m-d', $ev->getStart()),
+        "depart" => date('Y-m-d', $ev->getEnd()),
+        "allDay" => $ev->isWholeDay()
+      );
+      $it ++;
+    }
+    // pour supprimer la dernier date
+    /**
+     * Pour quelle supprimer, 13-11-2020.
+     */
+    // $periodes[$it - 1]["title"]='not use';
+    // $periodes[$it - 1]["allDay"]=FALSE;
+    $periodes[$it]["title"] = 'not use';
+    $periodes[$it]["allDay"] = FALSE;
+  }
+  return $periodes;
+}
+
+function reservationwebform_conf_form($form, &$form_state) {
+  // /form settings (multi-step)
+  $form['#prefix'] = '<div id="reservationwebform_conf_form_ID">';
+  $form['#suffix'] = '</div>';
+  if (! isset($form_state['stage']))
+    $form_state['stage'] = 'define_auther';
+  $form = array();
+  $form = reservationwebform_conf_form_get_header($form, $form_state); // /to build header form.
+
+  // //// steps for form
+
+  switch ($form_state['stage']) {
+    /*
+     * case 'define_nid':
+     * return reservationwebform_conf_form_define_nid($form, $form_state);
+     * break;
+     */
+
+    case 'define_auther':
+      return reservationwebform_conf_form_define_auther($form, $form_state);
+      break;
+    /*
+     * case 'define_end':
+     * return reservationwebform_conf_form_define_end($form, $form_state);
+     * break;
+     */
+    default:
+      return reservationwebform_conf_form_define_auther($form, $form_state);
+      break;
+  }
+  /*
+   * $path_of_module = drupal_get_path('module', 'reservationwebform');
+   * if(!file_exists($path_of_module.'/files/doc')) {mkdir($path_of_module.'/files/doc');}
+   * $filename = $path_of_module.'/files/doc/output'. time() .'.inc';
+   * ob_start();
+   * var_dump($form);
+   * $result = ob_get_clean();
+   * //if (!file_exists($filename) )
+   * {
+   * $monfichier = fopen($filename, 'w+');
+   * fputs($monfichier, $result);
+   * fclose($monfichier);
+   * }
+   * /*
+   */
+  return $form;
+}
+
+function creation_table_reservationwebform_component() {
+  // //////////////////////////////////////////
+  /**
+   *
+   * @file
+   * function to generate table : newsletter_users_newsletterauto
+   */
+  include_once 'files/tables/reservationwebform.reservationwebform_component.inc';
+  return $schema['reservationwebform_component'];
+}
+
+// /////////////////////////////////
+function reservationwebform_conf_form_callback($form, &$form_state) {
+  // on verifie si le nid existe et si c'est le seul champs
+  // if( ($form["nbre_d_titre"]["#value"] -1)
+  // if (!empty($form_state['values']['changethis'])
+  return $form;
+}
+
+function reservationwebform_conf_form_get_header($form, &$form_state) {
+  $form_state['stage'] = isset($form_state['stage']) ? $form_state['stage'] : 1;
+
+  $form_stages = array(
+    'define_nid' => 1,
+    'define_auther' => 2,
+    'define_end' => 3
+  );
+
+  if (isset($form_stages[$form_state['stage']])) {
+    $current_step = $form_stages[$form_state['stage']];
+  } else {
+    $current_step = 1;
+  }
+
+  $stages = array(
+    1 => array(
+      'data' => '1. selection du formulaire '
+    ),
+    2 => array(
+      'data' => '2. Configuration '
+    ),
+    3 => array(
+      'data' => '3. Sauvegarde réussi '
+    )
+  );
+
+  $stages[$current_step]['class'] = array(
+    'active'
+  );
+
+  $stages_list = theme('item_list', array(
+    'items' => $stages
+  ));
+  /*
+   * $form['header'] = array(
+   * '#type' => 'fieldset',
+   * '#title' => '',
+   * '#value' => '',//$stages_list,
+   * );
+   */
+
+  return $form;
+}
+
+function reservationwebform_conf_form_define_nid($form, &$form_state) {
+  $values = isset($form_state['multistep_values']['define_nid']) ? $form_state['multistep_values']['define_nid'] : array();
+
+  $form['define_nid']['nid'] = array(
+    '#type' => 'textfield',
+    '#title' => t(" identifiant du node (nid webform)"),
+    '#description' => "nid webform ou autre"
+    // '#required' => TRUE,
+    // '#default_value' => isset($values['nid']) ? $values['nid'] : NULL,
+  );
+
+  $form['next'] = array(
+    '#type' => 'submit',
+    '#value' => t('Next')
+  );
+
+  return $form;
+}
+
+function reservationwebform_conf_form_define_auther($form, &$form_state) {
+  $values = isset($form_state['multistep_values']['define_auther']) ? $form_state['multistep_values']['define_auther'] : array();
+  /*
+   * $form['define_auther']['service_rating'] = array(
+   * '#type' => 'radios',
+   * '#title' => 'How would you rate our service?',
+   * '#options' => array(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5),
+   * '#default_value' => isset($values['service_rating']) ? $values['service_rating'] : NULL,
+   * );
+   */
+
+  // $nid=$form_state['multistep_values']['define_nid']['nid'];
+  $nid = 44;
+  // /selection des élements du formulaire pour le node
+  /*
+   * $db_fields_nodeform = db_select('webform_component', 'n')
+   *
+   * ->fields('n', array('nid','cid','pid','form_key','name','type'))
+   * //->distinct()
+   * ->condition('nid', $nid )
+   * ->orderBy('cid', 'ASC')
+   * ->execute();
+   */
+  $attributes = array(
+    'id' => 'my-custom-listing',
+    'class' => 'links inline' // a string or indexed (string) array with the classes for the list tag
+  );
+  $form['define_auther']['link_custom'] = [
+    '#type' => 'item',
+    // '#markup'=> l(t('Chambre o-de-mer'), 'admin/structure/reservationwebform', ['piece'=>'chambre']),
+    '#markup' => theme_item_list([
+      'title' => 'selectionner ',
+      'attributes' => $attributes,
+      'type' => 'ul',
+      'items' => [
+        l(t('Chambre o-de-mer'), 'admin/structure/reservationwebform', [
+          'query' => [
+            'piece' => 'chambre'
+          ]
+        ]),
+        l(t('Gite'), 'admin/structure/reservationwebform', [
+          'query' => [
+            'piece' => 'gite'
+          ]
+        ])
+      ]
+    ])
+  ];
+  /**
+   * get current pice
+   *
+   * @var SelectQuery $db_fields_nodeform
+   */
+  $piece = 'chambre';
+  if (! empty($_GET['piece'])) {
+    $piece = $_GET['piece'];
+  }
+
+  /*
+   * $db_fields_nodeform = db_select('webform_component', 'n');
+   * $db_fields_nodeform ->leftjoin('reservationwebform_component', 'r', 'n.cid = r.cid AND n.nid = r.nid ');
+   * //$query ->addField('rss', 'id', 'id_rss');
+   * //$query ->addField('rsf', 'id', 'id_rsf');
+   * $db_fields_nodeform ->fields('n', array('nid','cid','pid','form_key','name','type'));
+   * $db_fields_nodeform ->fields('r', array('nid','cid','actif','calcul_price','display_price','price','texte_singulier','texte_plurier','data_nb_select','data_url_syn','data_order'));
+   * $db_fields_nodeform ->orderBy('n.cid', 'ASC');
+   * $db_fields_nodeform ->addField('n', 'nid', 'nid_w');
+   * $db_fields_nodeform ->addField('r', 'nid', 'nid_r');
+   * $db_fields_nodeform ->addField('n', 'cid', 'cid_w');
+   * $db_fields_nodeform ->addField('r', 'cid', 'cid_r');
+   * $db_fields_nodeform ->addField('r', 'price', 'price_r');
+   * $db_fields_nodeform ->condition('n.nid', $nid );
+   * //$db_fields_nodeform ->condition('r.nid', $nid );
+   *
+   * $db_or = db_or();
+   * //$db_or->condition('r.piece', $piece , '=');
+   * $db_or->condition('r.piece', 'default_not_delete' , '=');
+   * $db_fields_nodeform->condition($db_or);
+   *
+   * $db_fields_nodeform = $db_fields_nodeform ->execute();
+   */
+  /**
+   * Query brute
+   * SELECT r.`piece`, n.`nid`, n.`cid`, n.`pid`, n.`form_key`,n.`name`,n.`type`,r.`actif`,r.`calcul_price`,r.`display_price`,r.`price`,r.`texte_singulier`,r.`texte_plurier`,r.`data_nb_select`,r.`data_url_syn`,r.`data_order` from `webform_component` AS n
+   * LEFT JOIN `reservationwebform_component` AS r ON n.nid = r.nid WHERE (piece='gite' or piece='default_not_delete')
+   */
+  $query = "
+	SELECT r.`piece`, n.`nid` as 'nid_w', r.`nid` as 'nid_r', n.`cid` as cid_w, r.`cid` as cid_r, n.`pid`, n.`form_key`,n.`name`,n.`type`,r.`actif`,r.`calcul_price`,r.`display_price`,r.`price`,r.`texte_singulier`,r.`texte_plurier`,r.`data_nb_select`,r.`data_url_syn`,r.`data_order` from `webform_component` AS n
+	LEFT JOIN `reservationwebform_component` AS r ON (n.nid = r.nid and n.cid=r.cid ) WHERE (n.nid = '44' and piece='$piece')
+	";
+
+  $db_fields_nodeform = db_query($query);
+  /**
+   * Return all values in object.
+   */
+  // dpm( $db_fields_nodeform->fetchAll() );
+  $ih = 0;
+  if (! $db_fields_nodeform->fetchAssoc()) {
+    $db_fields_nodeform = db_query("
+	SELECT r.`piece`, n.`nid` as 'nid_w', r.`nid` as 'nid_r', n.`cid` as cid_w, r.`cid` as cid_r, n.`pid`, n.`form_key`,n.`name`,n.`type`,r.`actif`,r.`calcul_price`,r.`display_price`,r.`price`,r.`texte_singulier`,r.`texte_plurier`,r.`data_nb_select`,r.`data_url_syn`,r.`data_order` from `webform_component` AS n
+	LEFT JOIN `reservationwebform_component` AS r ON (n.nid = r.nid  )  WHERE (n.nid = '44' and r.piece ='default_not_delete' )
+	");
+  } else {
+    $db_fields_nodeform = db_query($query);
+  }
+
+  while ($field = $db_fields_nodeform->fetchAssoc()) {
+    // dpm($field);
+    // ////////////////////////////////////////////////
+    if ($ih == 0) {
+      $form['define_auther']['config'] = array(
+        '#title' => 'Champs : Paramètres ',
+        '#prefix' => '<div id="rs_field_config">',
+        '#suffix' => '</div>',
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE
+        // '#description' => t('reprente un slide'),
+      );
+      $form['define_auther']['config']['piece'] = [
+        '#type' => 'textfield',
+        '#title' => t(' Type de piece '),
+        '#default_value' => $piece
+      ];
+      $form['define_auther']['config']['data_url_syn'] = array(
+        '#type' => 'textfield',
+        '#title' => t(' url du calendrier de synchronisation'),
+        '#default_value' => isset($field['data_url_syn']) ? $field['data_url_syn'] : NULL
+      );
+      $form['define_auther']['config']['data_order'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Montant de base pour les dates (entier)'),
+        '#default_value' => isset($field['data_order']) ? $field['data_order'] : NULL
+      );
+    }
+    $ih ++;
+    // ///////////////////////////////////////////////////////////
+
+    $id = $field['cid_w'];
+    $form['define_auther']['field_' . $id] = array(
+      '#title' => 'Champs : ' . $field['name'],
+      '#prefix' => '<div id="rs_field_' . $id . '">',
+      '#suffix' => '</div>',
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE
+      // '#description' => t('reprente un slide'),
+    );
+    $form['define_auther']['field_' . $id]['actif' . $id] = array(
+      '#type' => 'checkbox',
+      '#title' => t('actif dans réservation'),
+      '#default_value' => isset($field['actif']) ? $field['actif'] : NULL
+    );
+    $form['define_auther']['field_' . $id]['display_price' . $id] = array(
+      '#type' => 'checkbox',
+      '#title' => t('affiche le prix'),
+      '#default_value' => isset($field['display_price']) ? $field['display_price'] : NULL
+    );
+    $form['define_auther']['field_' . $id]['calcul_price' . $id] = array(
+      '#type' => 'checkbox',
+      '#title' => t('prix proportionnel'),
+      '#default_value' => isset($field['calcul_price']) ? $field['calcul_price'] : NULL
+    );
+    $form['define_auther']['field_' . $id]['data_nb_select' . $id] = array(
+      '#type' => 'textfield',
+      '#title' => t('Nombre de choix possible (Champs select)'),
+      '#default_value' => isset($field['data_nb_select']) ? $field['data_nb_select'] : NULL
+    );
+    $form['define_auther']['field_' . $id]['price' . $id] = array(
+      '#type' => 'textfield',
+      '#title' => t('Montant ou texte (€) '),
+      '#default_value' => isset($field['price']) ? $field['price'] : NULL
+    );
+    $form['define_auther']['field_' . $id]['texte_singulier' . $id] = array(
+      '#type' => 'textfield',
+      '#title' => t(' texte à afficher au singulier '),
+      '#default_value' => isset($field['texte_singulier']) ? $field['texte_singulier'] : NULL
+    );
+    $form['define_auther']['field_' . $id]['texte_plurier' . $id] = array(
+      '#type' => 'textfield',
+      '#title' => t('texte à afficher au pluriel '),
+      '#default_value' => isset($field['texte_plurier']) ? $field['texte_plurier'] : NULL
+    );
+  }
+
+  /*
+   * $form['define_nid']['nid2'] = array(
+   * '#type' => 'textfield',
+   * '#title' => t(" identifiant du node (nid webform)"),
+   * '#description' => "nid webform ou autre",
+   * //'#required' => TRUE,
+   * '#default_value' => isset($form_state['multistep_values']['define_nid']['nid']) ? $form_state['multistep_values']['define_nid']['nid'] : NULL,
+   * );
+   */
+  /*
+   * $form['back'] = array(
+   * '#type' => 'submit',
+   * '#value' => t('Back')
+   * );
+   */
+
+  $form['next'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save')
+  );
+
+  return $form;
+}
+
+function reservationwebform_conf_form_define_end($form, &$form_state) {
+  $values = isset($form_state['multistep_values']['define_end']) ? $form_state['multistep_values']['define_end'] : array();
+
+  $form['define_end']['name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Name',
+    '#default_value' => isset($values['name']) ? $values['name'] : NULL
+  );
+
+  $form['define_end']['email'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Email',
+    '#default_value' => isset($values['email']) ? $values['email'] : NULL
+  );
+
+  $form['back'] = array(
+    '#type' => 'submit',
+    '#value' => t('Back')
+  );
+
+  $form['next'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit')
+  );
+
+  return $form;
+}
+
+function reservationwebform_conf_form_submit($form, &$form_state) {
+  switch ($form_state['stage']) {
+    /*
+     * case 'define_end':
+     * $form_state['multistep_values'][$form_state['stage']] = $form_state['values'];
+     * if ($form_state['triggering_element']['#value'] != 'Back') {
+     * reservationwebform_conf_define_end_submit($form, $form_state);
+     * $form_state['complete'] = TRUE;
+     * }
+     * break;
+     *
+     * case 'define_nid':
+     * $form_state['multistep_values'][$form_state['stage']] = $form_state['values'];
+     * if ($form_state['triggering_element']['#value'] != 'Back') {
+     * reservationwebform_conf_define_nid_save($form, $form_state);
+     * $form_state['new_stage'] = reservationwebform_conf_move_to_next_stage($form, $form_state);
+     * }
+     * break;
+     */
+
+    case 'define_auther':
+      $form_state['multistep_values'][$form_state['stage']] = $form_state['values'];
+      if ($form_state['triggering_element']['#value'] != 'Back') {
+        reservationwebform_conf_define_auther_save($form, $form_state);
+        $form_state['new_stage'] = reservationwebform_conf_move_to_next_stage($form, $form_state);
+      }
+      break;
+
+    default:
+      $form_state['multistep_values'][$form_state['stage']] = $form_state['values'];
+      $form_state['new_stage'] = reservationwebform_conf_move_to_next_stage($form, $form_state);
+      break;
+  }
+  /*
+   * if (isset($form_state['complete'])) drupal_goto('admin/structure/reservationwebform/tab2');
+   *
+   * if ($form_state['triggering_element']['#value'] == 'Back') {
+   * $form_state['new_stage'] = reservationwebform_conf_move_to_previous_stage($form, $form_state);
+   * }
+   *
+   * if (isset($form_state['multistep_values']['form_build_id'])) {
+   * $form_state['values']['form_build_id'] = $form_state['multistep_values']['form_build_id'];
+   * }
+   * $form_state['multistep_values']['form_build_id'] = $form_state['values']['form_build_id'];
+   * $form_state['stage'] = $form_state['new_stage'];
+   * $form_state['rebuild'] = TRUE;
+   * /*
+   * if(!empty($form_state['complete']) && $form_state['complete']==TRUE) { return 'configuration terminé';}
+   * return 'configuration terminé';
+   */
+}
+
+function reservationwebform_conf_move_to_next_stage($form, &$form_state) {
+  switch ($form_state['stage']) {
+    case 'define_nid':
+      return 'define_auther';
+      break;
+
+    case 'define_auther':
+      // return 'define_end';
+      return 'define_auther';
+      break;
+  }
+}
+
+function reservationwebform_conf_move_to_previous_stage($form, &$form_state) {
+  switch ($form_state['stage']) {
+    case 'define_auther':
+      // return 'define_nid';
+      return 'define_auther';
+      break;
+
+    case 'define_end':
+      return 'define_auther';
+      break;
+  }
+}
+
+function reservationwebform_conf_define_end_submit($form, &$form_state) {
+  /*
+   * $multstep_values = $form_state['multistep_values'];
+   *
+   * $module = 'reservationwebform_conf';
+   * $key = 'reservationwebform_conf_complete';
+   *
+   * $to = $multstep_values['define_end']['email'] . '; ' . variable_get('site_mail', 'admin@example.com');
+   * $from = variable_get('site_mail', 'admin@example.com');
+   *
+   * $params = array(
+   * 'body' => 'Thank you for filling in our survey. You have now been entered into our prize draw.',
+   * 'subject' => 'Thank you for filling in our survey, ' . $multstep_values['define_end']['name'],
+   * );
+   *
+   * $language = language_default();
+   * $send = FALSE;
+   * $result = drupal_mail($module, $key, $to, $language, $params, $from, $send);
+   * if ($result['result'] == TRUE) {
+   * drupal_set_message(t('Your message has been sent.'));
+   * }
+   * else {
+   * drupal_set_message(t('There was a problem sending your message and it was not sent.'), 'error');
+   * }
+   */
+}
+
+/**
+ * Returns what to show on the completion page.
+ */
+function reservationwebform_conf_complete() {
+  return 'Thank you for completing our survey. You have been sent an email confirming you\'ve been entered into our prize draw';
+}
+
+/**
+ */
+function reservationwebform_conf_form_validate($form, &$form_state) {
+  if ($form_state['triggering_element']['#value'] == 'Back') {
+    return;
+  }
+
+  switch ($form_state['stage']) {
+    case 'define_nid':
+      return reservationwebform_conf_define_nid_validate($form, $form_state);
+      break;
+
+    case 'define_auther':
+      return reservationwebform_conf_define_auther_validate($form, $form_state);
+      break;
+
+    case 'define_end':
+      return reservationwebform_conf_define_end_validate($form, $form_state);
+      break;
+  }
+}
+
+function reservationwebform_conf_define_nid_validate($form, &$form_state) {
+  /*
+   * if (!$form_state['values']['nid']) {
+   * form_set_error('nid', 'vous devez définir un nid');
+   * }
+   */
+}
+
+function reservationwebform_conf_define_auther_validate($form, &$form_state) {
+  /*
+   * if (!$form_state['values']['service_rating']) {
+   * form_set_error('service_rating', 'You must rate our service before continuing');
+   * }
+   */
+}
+
+/**
+ * Validation for the define_end step
+ */
+function reservationwebform_conf_define_end_validate($form, &$form_state) {
+  if (! $form_state['values']['name']) {
+    form_set_error('name', 'You must enter a name before continuing');
+  }
+
+  if (! valid_email_address($form_state['values']['email'])) {
+    form_set_error('email', 'You must enter a valid email address');
+  }
+}
+
+function reservationwebform_conf_define_nid_save($form, $form_state) {
+  // creation de la table si elle n'existe pas.
+  if (db_table_exists('reservationwebform_component')) {} else {
+    db_create_table('reservationwebform_component', creation_table_reservationwebform_component());
+  }
+  ;
+  // / on verifie si ce nid existe déja
+  /*
+   * $db_node_BD = db_select('reservationwebform_component', 'n')
+   * -> fields('n', array('nid'))
+   * -> condition('nid', $form_state['values']['nid'] )
+   * -> execute()->fetch();
+   *
+   * if(!isset($db_node_BD->nid)) {
+   * $result_insert2 = db_insert('reservationwebform_component')
+   * ->fields(
+   * array(
+   * "nid" => $form_state['values']['nid'],
+   * ))
+   * ->execute();
+   * }
+   */
+}
+
+function reservationwebform_conf_define_auther_save($form, $form_state) {
+  $nid = 44; // $form_state['multistep_values']['define_nid']['nid'];
+             // /selection des élements du formulaire pour le node
+  $db_fields_nodeform = db_select('webform_component', 'n')->fields('n', array(
+    'nid',
+    'cid',
+    'pid',
+    'form_key',
+    'name',
+    'type'
+  ))->
+  // ->distinct()
+  condition('nid', $nid)->orderBy('cid', 'ASC')->execute();
+  while ($field = $db_fields_nodeform->fetchAssoc()) {
+    // /on verifie si le champ existe déja
+    $id = $cid = $field['cid'];
+    $filed_exit = db_select('reservationwebform_component', 'n')->fields('n', array(
+      'nid',
+      'cid'
+    ))
+      ->condition('nid', $nid)
+      ->condition('cid', $cid)
+      ->condition('piece', $form_state['multistep_values']['define_auther']['piece'])
+      ->execute()
+      ->fetch();
+    if (! empty($filed_exit->cid)) {
+      // // mise à jour du champs
+      $num_updated = db_update('reservationwebform_component')-> // Table name no longer needs {}
+      fields(array(
+        "actif" => $form_state['multistep_values']['define_auther']['actif' . $id],
+        "display_price" => $form_state['multistep_values']['define_auther']['display_price' . $id],
+        "calcul_price" => $form_state['multistep_values']['define_auther']['calcul_price' . $id],
+        "data_nb_select" => $form_state['multistep_values']['define_auther']['data_nb_select' . $id],
+        "price" => $form_state['multistep_values']['define_auther']['price' . $id],
+        "texte_singulier" => $form_state['multistep_values']['define_auther']['texte_singulier' . $id],
+        "texte_plurier" => $form_state['multistep_values']['define_auther']['texte_plurier' . $id],
+        "data_url_syn" => $form_state['multistep_values']['define_auther']['data_url_syn'],
+        "data_order" => (! empty($form_state['multistep_values']['define_auther']['data_order'])) ? $form_state['multistep_values']['define_auther']['data_order'] : 0
+      ))
+        ->condition('nid', $nid, '=')
+        ->condition('cid', $cid, '=')
+        ->condition('piece', $form_state['multistep_values']['define_auther']['piece'])
+        ->execute();
+    } else { // // insertion des nouvelles valeur
+      $result_insert2 = db_insert('reservationwebform_component')->fields(array(
+        "nid" => $nid,
+        "cid" => $cid,
+        "actif" => $form_state['multistep_values']['define_auther']['actif' . $id],
+        "display_price" => $form_state['multistep_values']['define_auther']['display_price' . $id],
+        "calcul_price" => $form_state['multistep_values']['define_auther']['calcul_price' . $id],
+        "data_nb_select" => $form_state['multistep_values']['define_auther']['data_nb_select' . $id],
+        "price" => $form_state['multistep_values']['define_auther']['price' . $id],
+        "texte_singulier" => $form_state['multistep_values']['define_auther']['texte_singulier' . $id],
+        "texte_plurier" => $form_state['multistep_values']['define_auther']['texte_plurier' . $id],
+        "data_url_syn" => $form_state['multistep_values']['define_auther']['data_url_syn'],
+        "data_order" => (! empty($form_state['multistep_values']['define_auther']['data_order'])) ? $form_state['multistep_values']['define_auther']['data_order'] : 0,
+        "piece" => $form_state['multistep_values']['define_auther']['piece']
+      ))->execute();
+    }
+  }
+}
+
+/**
+ * Implement hook_mail_alter
+ *
+ * @param array $message
+ */
+function reservationwebform_mail_alter(&$message) {
+  // dpm($message);
+}
+
+/**
+ * Select tn.`id_data` as id_data, tn.`sid`, tn.`sid`, tn.`cid`, tn.`data`, tn.`completed`, tn.`date_submitted` FROM
+ * ( SELECT r.`nid` as id_data, r.`sid`, r.`data`, r.`cid`, ws.`completed`, DATE_FORMAT(FROM_UNIXTIME(`completed`), '%Y') as `date_submitted` FROM `webform_submitted_data` as r
+ * INNER JOIN `webform_submissions` AS ws ON ws.nid = r.nid
+ * where r.nid = 45 ) as tn where `date_submitted`=2018
+ */
+function reservationwebform_libelle() {
+  $form = drupal_get_form('reservationwebform_libelle_form');
+  $output = drupal_render($form);
+
+  return $output;
+}
+
+function reservationwebform_libelle_form($form, &$form_state) {
+  $form = [];
+  $config = _wbu_libelle();
+
+  foreach ($config as $key => $value) {
+    $val = (variable_get('wbu_' . $key)) ? variable_get('wbu_' . $key) : $value;
+    $form[$key] = array(
+      '#type' => 'textfield',
+      '#title' => 'Libellé : ' . $val,
+      '#default_value' => $val
+    );
+  }
+
+  $form['submit_button'] = array(
+    '#type' => 'submit',
+    '#value' => 'Enregistrer'
+  );
+  return $form;
+}
+
+/**
+ *
+ * @param array $form
+ * @param array $form_state
+ */
+function reservationwebform_libelle_form_submit($form, $form_state) {
+  $form_state['values'];
+  drupal_set_message('Données enregistrées');
+  $config = _wbu_libelle();
+  foreach ($config as $key => $value) {
+    if (isset($form_state['values'][$key])) {
+      t($form_state['values'][$key]);
+      variable_set('wbu_' . $key, $form_state['values'][$key]);
+    }
+  }
+}
+
+function _wbu_libelle() {
+  return [
+    'closeText' => ('To close'),
+    'prevText' => ('Previous'),
+    'nextText' => ('following'),
+    'currentText' => ('Today'),
+    'already-booked' => ('Already booked'),
+    'arrival-date' => ('Arrival date'),
+    'date-departure' => ('Date of departure'),
+    'reserve-now' => ('Reserve now'),
+    'you-can-anymore' => ('You can not book anymore'),
+    'options' => ('Options'),
+    'nuits' => ('nights'),
+    'nuit' => ('night'),
+    'nuits-du' => ('nights of'),
+    'au' => ('to'),
+    'price' => ('Price'),
+    'total' => ('Total'),
+    'free-nights' => ('free nights'),
+    'reset' => ('Reset'),
+    'extra_cost' => ('Extra cost'),
+    'from' => ('from'),
+    'the' => 'the',
+    'Adults' => 'Adults',
+    'Adult' => 'Adult',
+    'pdj' => 'Breakfasts from the',
+    'kid' => 'kid 2 years old and more',
+    'kids' => 'kids 2 years old and more',
+    'child' => 'Child under 2 years',
+    'children' => 'Children under 2 years',
+    'reservation_supp_kids_euros' => 'kids euros',
+    'pdj_euros' => 'pdj euros',
+    'free' => 'free',
+    'Summary' => 'Summary',
+    'no-choise' => 'No choice',
+    'Makereservation' => 'Make a reservation'
+  ];
+}
+
+
+
+
+
+
+

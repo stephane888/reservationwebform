@@ -1,0 +1,7 @@
+name = reservation webform
+description = permet de surpplanter la sortie et l'enregistement d'un formulaire webform.
+dependencies[] = webform
+core = 7.x
+version = 7.x-1.0
+package = " module wbuniverse.com "
+configure = admin/config/user-interface/reservationwebform

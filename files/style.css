@@ -1,0 +1,17 @@
+ /**
+ *
+/* reservation */
+#recapitulatif .periode strong {font-weight: 500;}
+#recapitulatif .personnelinfo strong {font-weight: 500;}
+#recapitulatif .option strong {font-weight: 500;}
+.webform-component--selectionner .form-radios .form-item:hover{background: #286f93; }
+.webform-component--selectionner .form-radios .form-item:hover label{color:#FFF;}
+
+/**
+ * masque les autres champs de formulaires
+ */
+.webform-client-form-44 > div{position:relative; z-index:1;}
+.webform-client-form-44 > div::before{ content:''; display:block; top:0; left:0; right:0; bottom:0; position:absolute; z-index:5; background: rgba(255, 255, 255, 0.8);}
+.webform-client-form-44 > div.remove_over::before{display:none;}
+.webform-client-form-44 .webform-component--selectionner{position:relative; z-index:10;}
+
